@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Happy Birthday Shovo </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      touch-action: none;
+      user-select: none;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #1b021a 0%, #080009 100%);
+      font-family: 'Poppins', sans-serif;
+    }
+
+    /* Background Heart Particles Canvas */
+    #heartCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* 3D Scene Viewport */
+    #viewport {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      perspective: 1000px;
+      z-index: 2;
+    }
+
+    #drag-container, #spin-container {
+      position: relative;
+      display: flex;
+      margin: auto;
+      transform-style: preserve-3d;
+      transform: rotateX(-10deg);
+    }
+
+    #spin-container {
+      width: 120px;
+      height: 170px;
+    }
+
+    #spin-container img {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 12px;
+      border: 2px solid rgba(255, 105, 180, 0.6);
+      box-shadow: 0 0 15px rgba(255, 20, 147, 0.5), inset 0 0 10px rgba(255, 20, 147, 0.3);
+      object-fit: cover;
+      -webkit-box-reflect: below 10px linear-gradient(transparent, transparent 60%, rgba(255, 255, 255, 0.25));
+      transition: transform 0.8s ease, filter 0.3s;
+      cursor: pointer;
+    }
+
+    #spin-container img:hover {
+      filter: brightness(1.2) drop-shadow(0 0 15px #ff69b4);
+    }
+
+    /* Center text inside the carousel */
+    #spin-container p {
+      font-family: 'Caveat', cursive;
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotateX(90deg);
+      color: #ff9ee2;
+      font-size: 26px;
+      text-align: center;
+      width: 220px;
+      text-shadow: 0 0 12px #ff1493;
+      line-height: 1.1;
+    }
+
+    /* Ground spotlight effect */
+    #ground {
+      width: 500px;
+      height: 500px;
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotateX(90deg);
+      background: radial-gradient(center center, farthest-side, rgba(255, 20, 147, 0.25), transparent);
+      background: -webkit-radial-gradient(center center, farthest-side, rgba(255, 20, 147, 0.25), transparent);
+      border-radius: 50%;
+    }
+
+    /* Action Buttons */
+    .action-btn {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      background: linear-gradient(135deg, #ff2d75, #ff6b9d);
+      border: none;
+      border-radius: 50%;
+      width: 54px;
+      height: 54px;
+      font-size: 24px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 15px rgba(255, 45, 117, 0.6);
+      cursor: pointer;
+      z-index: 10;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .action-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 25px rgba(255, 45, 117, 0.9);
+    }
+
+    /* Popup Modals */
+    .modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: rgba(255, 255, 255, 0.95);
+      color: #333;
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 0 30px rgba(255, 105, 180, 0.6);
+      position: relative;
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .modal-box h2 {
+      color: #ff1493;
+      font-size: 20px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .modal-box p {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #555;
+      margin-bottom: 20px;
+    }
+
+    .modal-box button {
+      background: linear-gradient(135deg, #ff2d75, #9b51e0);
+      color: #fff;
+      border: none;
+      border-radius: 25px;
+      padding: 10px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(255, 45, 117, 0.4);
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 18px;
+      color: #888;
+      cursor: pointer;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.7); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+<h1>Happy Birthday Shakib Ahmed Shovo </h1>
+  <!-- Floating Heart Particles -->
+  <canvas id="heartCanvas"></canvas>
+   
+  <!-- 3D Carousel Scene -->
+  <div id="viewport">
+    <div id="drag-container">
+      <div id="spin-container">
+        <!-- Add your portrait photos here -->
+        <img src="sv.jpeg" alt="Memory 1" />
+        <img src="s.jpeg" alt="Memory 2" />
+        <img src="aa.jpeg" alt="Memory 3" />
+        <img src="c.jpeg" alt="Memory 4" />
+        <img src="dd.jpeg" alt="Memory 5" />
+        <img src="g.jpeg" alt="Memory 6" />
+        <img src="b.jpeg" alt="Memory 7" />
+        <img src="sa.jpeg" alt="Memory 8" />
+
+        <p>Happy Birthday<br> Shakib Ahmed Shovo❤️</p>
+      </div>
+      <div id="ground"></div>
+    </div>
+  </div>
+
+  <!-- Action Button -->
+  <button class="action-btn" id="giftBtn">🎁</button>
+
+  <!-- Surprise Modal -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal-box">
+      <button class="close-btn" id="closeModal">&times;</button>
+      <h2>🎁 Surprise Gift!</h2>
+      <p>
+       Happy Birthday! 🌹<br> shovo vai <br>
+May every dream you cherish come true, every challenge turn into an opportunity, and every day ahead be brighter than the last. Wishing you endless joy, love, and success in the year ahead. Have a truly wonderful birthday! 🎂🎉
+ 🌸✨
+      </p>
+      <button id="cardNextBtn">Send Love ❤️</button>
+    </div>
+  </div>
+
+  <script>
+    // --- 3D CAROUSEL SETUP ---
+    const radius = 240; // Distance of images from center (px)
+    const autoRotate = true;
+    const rotateSpeed = -60; // seconds per full rotation
+
+    const ospin = document.getElementById('spin-container');
+    const odrag = document.getElementById('drag-container');
+    const aImg = ospin.getElementsByTagName('img');
+    const count = aImg.length;
+
+    // Distribute images along the cylinder
+    for (let i = 0; i < count; i++) {
+      aImg[i].style.transform = `rotateY(${i * (360 / count)}deg) translateZ(${radius}px)`;
+      aImg[i].style.transitionDelay = `${(count - i) / 4}s`;
+    }
+
+    // Auto-spin animation
+    if (autoRotate) {
+      const animationName = rotateSpeed > 0 ? 'spin' : 'spinRevert';
+      ospin.style.animation = `${animationName} ${Math.abs(rotateSpeed)}s infinite linear`;
+    }
+
+    // Add CSS Keyframes dynamically for spin
+    const styleSheet = document.createElement("style");
+    styleSheet.innerHTML = `
+      @keyframes spin { from { transform: rotateY(0deg); } to { transform: rotateY(360deg); } }
+      @keyframes spinRevert { from { transform: rotateY(360deg); } to { transform: rotateY(0deg); } }
+    `;
+    document.head.appendChild(styleSheet);
+
+    // Drag / Touch Controls
+    let tX = 0, tY = 10, dX = 0, dY = 0;
+
+    function applyTransform() {
+      if (tY > 180) tY = 180;
+      if (tY < -180) tY = -180;
+      odrag.style.transform = `rotateX(${-tY}deg) rotateY(${tX}deg)`;
+    }
+
+    document.onpointerdown = function (e) {
+      clearInterval(odrag.timer);
+      let sX = e.clientX, sY = e.clientY;
+
+      this.onpointermove = function (e) {
+        let nX = e.clientX, nY = e.clientY;
+        dX = nX - sX;
+        dY = nY - sY;
+        tX += dX * 0.1;
+        tY += dY * 0.1;
+        applyTransform();
+        sX = nX;
+        sY = nY;
+      };
+
+      this.onpointerup = function () {
+        this.onpointermove = this.onpointerup = null;
+        // Inertia
+        odrag.timer = setInterval(function () {
+          dX *= 0.95;
+          dY *= 0.95;
+          tX += dX * 0.1;
+          tY += dY * 0.1;
+          applyTransform();
+          if (Math.abs(dX) < 0.5 && Math.abs(dY) < 0.5) {
+            clearInterval(odrag.timer);
+          }
+        }, 17);
+      };
+      return false;
+    };
+
+    // --- FLOATING HEARTS & PARTICLES CANVAS ---
+    const canvas = document.getElementById('heartCanvas');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    const particles = [];
+    const HEART_COUNT = 60;
+
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * width;
+        this.y = height + 20;
+        this.size = Math.random() * 12 + 6;
+        this.speedY = Math.random() * 1.5 + 0.5;
+        this.speedX = (Math.random() - 0.5) * 0.8;
+        this.opacity = Math.random() * 0.6 + 0.2;
+        this.color = ['#ff4d88', '#ff77aa', '#ff1493', '#b76e79'][Math.floor(Math.random() * 4)];
+      }
+      update() {
+        this.y -= this.speedY;
+        this.x += this.speedX;
+        if (this.y < -20) this.reset();
+      }
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+        ctx.fillStyle = this.color;
+        ctx.translate(this.x, this.y);
+        ctx.beginPath();
+        // Heart shape formula
+        const topCurveHeight = this.size * 0.3;
+        ctx.moveTo(0, topCurveHeight);
+        ctx.bezierCurveTo(0, 0, -this.size / 2, 0, -this.size / 2, topCurveHeight);
+        ctx.bezierCurveTo(-this.size / 2, (this.size + topCurveHeight) / 2, 0, this.size, 0, this.size);
+        ctx.bezierCurveTo(0, this.size, this.size / 2, (this.size + topCurveHeight) / 2, this.size / 2, topCurveHeight);
+        ctx.bezierCurveTo(this.size / 2, 0, 0, 0, 0, topCurveHeight);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    for (let i = 0; i < HEART_COUNT; i++) {
+      const p = new Particle();
+      p.y = Math.random() * height; // Spread initially
+      particles.push(p);
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, width, height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // --- MODAL CONTROLS ---
+    const giftBtn = document.getElementById('giftBtn');
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const closeModal = document.getElementById('closeModal');
+    const cardNextBtn = document.getElementById('cardNextBtn');
+
+    giftBtn.addEventListener('click', () => modalBackdrop.classList.add('active'));
+    closeModal.addEventListener('click', () => modalBackdrop.classList.remove('active'));
+    cardNextBtn.addEventListener('click', () => modalBackdrop.classList.remove('active'));
+  </script>
+</body>
+</html>
